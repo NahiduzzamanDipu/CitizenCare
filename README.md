@@ -1,4 +1,5 @@
 # CitizenCare
+<<<<<<< HEAD
 
 **Smart public safety & crime alert system.** Citizens report incidents with evidence and a precise map location; officers verify and respond from a live command centre; a YOLOv8 service watches connected cameras and raises weapon alerts in real time. Administrators manage users, police stations and registration codes from a dedicated portal.
 
@@ -302,3 +303,6 @@ Never commit a real `.env`. The repository ignores `.env` files while keeping `.
 ## License
 
 [MIT](LICENSE).
+=======
+CitizenCare is a full-stack public safety platform that enables citizens to report crimes with photos and location details. It helps police monitor reports, respond to emergencies through real-time SOS alerts, and detect potential threats using AI-powered CCTV surveillance. Built with React, Express.js, MongoDB, Socket.IO, and YOLOv8.
+>>>>>>> ad6d931b90044a4e6abe94dfb39541e7c0806c12
