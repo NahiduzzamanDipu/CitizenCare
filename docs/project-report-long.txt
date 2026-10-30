@@ -1,0 +1,322 @@
+CitizenCare — Smart Public Safety & Crime Alert System
+Project Report (Detailed - Plain Text)
+Date: 2026-04-27
+
+
+ABSTRACT
+CitizenCare is a full‑stack public safety and crime alert web application designed to support both citizens and law enforcement staff. The main goal is to reduce response time and improve situational awareness by combining structured incident reporting, verification workflows, real‑time emergency alerts, and AI-assisted CCTV weapon/suspicious object detection. The system provides two main user experiences: a citizen portal for reporting incidents and viewing verified incidents on a map, and a police/admin portal for managing incidents, monitoring real‑time alerts, and reviewing CCTV weapon events.
+
+Technically, CitizenCare is implemented using a modern web stack: React (Vite) for the frontend UI, Node.js + Express for the backend REST API, MongoDB with Mongoose for data storage, and Socket.io for real‑time events. For AI functionality, an optional Python Flask service runs Ultralytics YOLOv8 on CCTV frames. The frontend captures frames (about 1 frame per second) from a camera stream, the backend forwards frames to the AI service, and detections are returned to the client and also broadcast to staff if a weapon class is detected. The project demonstrates how software engineering and AI integration can work together to build a practical, scalable public safety solution.
+
+
+PROBLEM STATEMENT
+Public safety systems often face delays and inefficiencies because incident reporting is not always fast, structured, or accessible. In many areas, people may hesitate to report crime due to complicated procedures, lack of trust, or the effort required to reach authorities. Even when a report is submitted, the information may be incomplete (no clear location, weak description, or missing evidence). As a result, police response and decision-making can be slower than necessary.
+
+Another major problem is real‑time awareness. Emergencies such as harassment, assault, or suspicious activities require immediate attention, but traditional reporting channels are not optimized for rapid notification and coordination. At the same time, CCTV surveillance is widely used, yet monitoring is often manual. Human operators can miss critical events due to fatigue, multiple camera feeds, or poor visibility. There is also a need for citizens to understand whether an area has been risky recently, based on verified incident data and detected threats.
+
+CitizenCare addresses these issues by enabling quick digital reporting with location support, staff verification and management, real-time SOS alerts, and an optional AI-powered CCTV detection pipeline that can produce immediate alerts.
+
+
+OBJECTIVES
+The key objectives of CitizenCare are:
+
+1) Provide an easy-to-use digital platform for reporting incidents.
+   The citizen interface should make it simple to create a report with essential fields such as title, description, crime type, and geographic location. Optional media attachments help improve evidence quality.
+
+2) Ensure secure authentication and role-based access control.
+   The system should protect user data using password hashing and JWT authentication, and it should enforce roles so that sensitive operations are restricted to police/admin users.
+
+3) Support a verification workflow to maintain data reliability.
+   Reports should not immediately become public. Police/admin users can verify reports to reduce spam or misinformation and to keep the public map accurate.
+
+4) Provide real-time communication for emergencies and updates.
+   Socket.io should be used to broadcast SOS events, CCTV alerts, and important notifications to the correct staff channels to improve response time.
+
+5) Integrate AI as an optional enhancement for CCTV threat detection.
+   A separate Python service should process CCTV frames using YOLOv8 and return detections; the backend can store events and notify staff when weapon-related classes are detected.
+
+6) Offer analytics and safety status to support decision-making.
+   Police/admin dashboards can use data summaries and trends to understand incident distribution, while citizens can see safety status for a location based on recent verified activity.
+
+
+METHODOLOGY
+CitizenCare was developed using an incremental and modular approach, where the project was built in multiple stages and continuously improved:
+
+- Requirement Analysis:
+  The initial phase focused on identifying core modules: user authentication, crime reporting, map visualization, SOS alerting, and the CCTV AI detection feature.
+
+- System Design:
+  The architecture was planned as a multi-service system: a frontend SPA, a backend REST API with real-time sockets, and an optional AI microservice. This separation improves maintainability and allows the AI component to be developed or deployed independently.
+
+- Implementation:
+  Each module was implemented as a separate part of the application to reduce complexity. For example, authentication and authorization logic are applied on protected routes, report creation uses multipart form data for media uploads, and CCTV logic forwards frames to the AI service.
+
+- Integration:
+  After building the basic modules, integration was performed between the frontend and backend using REST APIs and between backend and AI service using HTTP requests. Socket.io integration ensured real-time events were delivered.
+
+- Testing:
+  Manual testing was executed using prepared test cases, verifying core flows (register/login, reporting, verification, safety status, CCTV detection, and realtime notifications).
+
+
+FRONTEND
+The CitizenCare frontend is a React single-page application (SPA) created with Vite. The UI is designed to be modern and responsive using Tailwind CSS. The frontend is responsible for user interactions, data input, displaying maps, rendering dashboards, and showing real-time alerts.
+
+Key frontend responsibilities include:
+- Authentication UI:
+  Register and login screens allow users to create accounts and authenticate. After login, a JWT token is stored (commonly in memory or local storage depending on implementation) and used to call protected APIs.
+
+- Citizen Portal Features:
+  Citizens can submit reports, view their own reports, see verified incidents, and review safety status. The map feature uses Google Maps when an API key is available; otherwise, the application can fall back to list-based representations.
+
+- Police/Admin Portal Features:
+  Police users can view pending reports, verify or update statuses, handle SOS alerts, monitor CCTV alerts, and check analytics graphs.
+
+- Real-time Updates:
+  Socket.io client is used to receive notifications such as new SOS events, report status updates, and CCTV weapon alerts. This helps provide a live monitoring experience for staff users.
+
+- Visualization:
+  The analytics module uses charting (Recharts) to present incident counts and trends in a clear way.
+
+
+BACKEND
+The backend is a Node.js + Express REST API, responsible for business logic, authentication, database operations, media handling, and real-time event emission through Socket.io. The API enforces validation and role-based permissions for sensitive actions.
+
+Major backend responsibilities include:
+- Authentication and Authorization:
+  User registration and login use secure password hashing (bcrypt). JWT tokens are generated for sessions. Protected routes validate tokens and check roles (citizen vs police/admin).
+
+- Crime Report Management:
+  Citizens can submit reports containing metadata and optional media uploads. Reports follow a workflow (pending → verified/fake/resolved). Police/admin users can review and update reports. Verified reports become visible for public map views.
+
+- Emergency SOS Alerts:
+  The backend supports creation of SOS alerts and broadcasts them in real-time to staff channels.
+
+- Media Uploads:
+  Multer is used for handling uploads. The system can store media locally (server/uploads) or optionally use Cloudinary for cloud storage when configured.
+
+- Real-time Communication:
+  Socket.io is set up on the server side to manage rooms such as staff rooms and user-specific channels. This enables targeted event broadcasting and supports live dashboards.
+
+- AI Integration:
+  For CCTV AI, the backend receives frames, forwards them to the Python AI service, stores events in MongoDB, and emits alerts when necessary. This design allows the backend to remain the central controller while AI runs separately.
+
+
+AI MODULE
+The AI module is implemented as an optional microservice using Python Flask. It uses Ultralytics YOLOv8 to detect objects in images. The AI service receives an image file through a multipart HTTP request and returns structured detection results.
+
+Important points of the AI module:
+- Separate Service:
+  AI runs outside Node.js because YOLOv8 uses PyTorch and the Python ecosystem is well-suited for ML inference.
+
+- Detection Output:
+  The service returns detection lists, labels, confidence scores, and a flag indicating whether a weapon class was detected. The backend can apply additional rules (e.g., which classes count as weapons).
+
+- Practical Limitations:
+  The default YOLOv8 model trained on COCO includes classes like knife, scissors, and baseball bat, but firearms are not reliably included. For firearm detection, the project supports using custom-trained weights.
+
+- Performance Decision:
+  Frames are uploaded around 1 FPS to balance latency, CPU usage, and network bandwidth in a student project environment.
+
+
+SYSTEM ARCHITECTURE
+CitizenCare uses a layered architecture with three main components:
+
+1) Client Layer (Frontend):
+   React SPA runs on port 5173 in development. It provides UI for citizens and police/admin users and communicates with the backend using REST and Socket.io.
+
+2) Application Layer (Backend API + Socket.io):
+   Express server runs on port 5000. It handles authentication, validation, API endpoints, database communication, file uploads, and real-time socket events.
+
+3) AI Layer (Python Flask YOLOv8 Service - Optional):
+   Flask service runs on port 5050. It receives image frames and returns detections. The backend controls the flow and stores relevant detection events.
+
+Data Flow (High Level):
+- User actions on frontend → REST calls to backend.
+- Backend operations → MongoDB reads/writes.
+- Real-time events → Socket.io server → Socket.io clients.
+- CCTV frames → backend endpoint → forwarded to AI service → detection result → stored + alert broadcast.
+
+
+KEY FEATURES
+CitizenCare includes the following key features:
+
+1) User Authentication and Roles:
+   Secure registration and login with JWT. Role-based permissions separate citizen and police/admin actions.
+
+2) Crime Reporting with Location:
+   Citizens can create reports with category, description, and map coordinates. Optional images/videos can be attached.
+
+3) Verification Workflow:
+   Police/admin users can verify reports. Only verified incidents appear in public map results, improving reliability.
+
+4) SOS Emergency Button:
+   Citizens can trigger SOS alerts. Staff receive immediate notifications with location information.
+
+5) Real-time Notifications:
+   Socket.io broadcasts important events such as new SOS alerts, CCTV weapon alerts, and report status updates.
+
+6) Analytics Dashboard:
+   Staff dashboards show summaries and trends. Charts help understand crime distribution over time and by type.
+
+7) AI-assisted CCTV Monitoring (Optional):
+   The system can analyze CCTV frames, detect weapon-like objects, store events, and push alerts to staff in real time.
+
+8) Safety Status for Citizens:
+   A simple rule-based score estimates the risk level based on recent verified crime reports and CCTV weapon events near a location.
+
+
+DATABASE DESIGN
+CitizenCare uses MongoDB because it supports flexible document-based data and is suitable for rapid development. Mongoose ODM is used to define schemas and enforce structure.
+
+Main collections (conceptual):
+- Users:
+  Stores user profile, email, hashed password, role, status (active/inactive), and timestamps.
+
+- CrimeReport:
+  Stores report details (title, description, type, status) and location (lat/lng). Links to submitter user ID. Media URLs can be stored for attached files.
+
+- Alerts (SOS):
+  Stores emergency alerts, location, optional message, and acknowledgement status.
+
+- Notification:
+  Stores per-user notifications (type, title, body, read/unread). Used for in-app updates.
+
+- CctvEvent:
+  Stores AI detection events (weaponDetected flag, labels, detections, optional snapshot, and timestamps). Events can be queried by staff.
+
+ER diagrams are included separately in the project documentation images. Although MongoDB is NoSQL, the ER diagram is useful in a student report to show relationships among entities.
+
+
+FRONTEND IMPLEMENTATION
+The frontend was implemented with a focus on usability and clarity:
+- Page Routing:
+  React Router is used to separate citizen and police workflows. After login, users are redirected based on their role.
+
+- State and API Integration:
+  The application calls backend APIs for authentication, reports, alerts, and analytics. The JWT token is sent in request headers for protected routes.
+
+- Map Integration:
+  Google Maps integration shows verified reports and markers. When a user clicks on the map, the safety status module can compute a risk score for that location by calling the backend.
+
+- CCTV Page:
+  The CCTV module uses getUserMedia to access the camera, shows the live video preview, captures frames using a hidden canvas, and uploads frames periodically to the backend.
+
+- Real-time UI:
+  Staff dashboards display live alert banners/popup messages when Socket.io events are received (for example, cctv-alert, emergency, and notification events).
+
+
+BACKEND IMPLEMENTATION
+The backend follows REST principles with clear endpoints:
+- Auth Routes:
+  /api/auth/register, /api/auth/login, /api/auth/me
+
+- Report Routes:
+  Create reports (multipart upload), list reports, update report status, and map endpoints for verified incidents.
+
+- Alert Routes:
+  Create SOS alerts and allow staff to acknowledge them.
+
+- Analytics Routes:
+  Summary endpoints provide report counts and trends for dashboards.
+
+- CCTV and AI Routes:
+  Upload-frame endpoint receives a single image frame. The backend forwards it to Python AI, stores results, and triggers Socket.io events if weaponDetected is true.
+
+Additionally, validation middleware ensures required fields are present, and authorization middleware ensures only permitted roles can access staff functions.
+
+
+DATABASE IMPLEMENTATION
+Database implementation uses Mongoose models to define schemas and perform queries:
+- Schema Structure:
+  Each model defines key fields (strings, numbers, status enums, timestamps) and references to user IDs where needed.
+
+- Workflow Support:
+  CrimeReport status transitions are stored and updated by staff routes. This allows the system to keep a history of report statuses and present correct views to citizens and staff.
+
+- Query Patterns:
+  Common queries include retrieving verified reports for map display, paginated staff report lists, recent CCTV events, and safety status calculations based on time and radius filters.
+
+MongoDB indexing and GeoJSON improvements are possible as future work; in the current version the system focuses on correctness and understandable student-level implementation.
+
+
+AI IMPLEMENTATION
+The AI implementation was designed to be simple but effective:
+- Endpoint Design:
+  The Flask app exposes /detect to accept multipart form images. It runs YOLO inference and returns detections in JSON.
+
+- Weapon Logic:
+  The project can treat selected classes as weapons (e.g., knife) and sets a weaponDetected flag. This simplifies decision-making on the backend and frontend.
+
+- Integration:
+  Node forwards frames to Python using HTTP and returns results to the frontend. When a weapon is detected, the backend logs an event to MongoDB and notifies staff via Socket.io.
+
+- Custom Model Support:
+  For more accurate weapon detection (including guns), the service supports changing YOLO model weights using environment variables and training a custom dataset.
+
+
+SECURITY CONSIDERATIONS
+Security was considered at multiple levels:
+- Password Security:
+  Passwords are not stored in plain text; bcrypt hashing is used to store password hashes.
+
+- Token-based Authentication:
+  JWT tokens are issued after login. Protected endpoints require a valid token, preventing unauthorized access.
+
+- Role-based Access:
+  Sensitive endpoints such as verifying reports, viewing user lists, and viewing CCTV events are restricted to police/admin roles.
+
+- API Hardening:
+  Helmet adds secure headers. CORS settings restrict cross-origin requests to trusted client URLs.
+
+- Secrets Management:
+  Secrets such as JWT_SECRET, MongoDB URI, Cloudinary keys, and API keys are stored in environment variables and not hard-coded.
+
+For production use, additional improvements such as rate limiting, refresh tokens, secure cookie storage, and auditing would be recommended.
+
+
+TESTING AND RESULTS
+Testing was performed mainly through manual test cases because the project focuses on end-to-end feature validation. A prepared test case sheet includes:
+- Backend and AI health checks
+- Registration and login for citizen and police users
+- Crime report creation and verification workflow
+- CCTV frame upload and AI detection responses
+- Real-time events (SOS alerts and CCTV alerts)
+- Safety status computation and UI updates
+
+Results showed that the system components work together as expected in the development environment:
+- The backend API responds correctly and enforces authentication.
+- Crime reports can be created, verified, and displayed on map views.
+- SOS alerts and CCTV weapon alerts are delivered in real time via Socket.io.
+- The AI module returns detections and the system stores CCTV events in MongoDB.
+
+The test cases were documented in a PDF test case sheet included in the documentation.
+
+
+LIMITATIONS
+CitizenCare has some limitations typical of a student project:
+- Model Limitation:
+  Default COCO YOLO weights do not reliably detect firearms. Weapon detection is limited unless a custom model is trained and used.
+
+- Performance Constraints:
+  Real-time CCTV is implemented using periodic frame uploads rather than high-FPS streaming to keep CPU/network usage manageable.
+
+- Data Quality:
+  Safety scoring depends on verified data and the availability of enough reports/events. Sparse data may produce low-confidence safety estimates.
+
+- Production Readiness:
+  For real deployment, additional security and scaling measures are necessary, including HTTPS, stricter CORS, rate limiting, monitoring, and persistent cloud storage.
+
+
+FUTURE WORK
+Future improvements can make CitizenCare more powerful and production-ready:
+- Train and deploy a custom weapon model (gun/knife classes) and optimize inference speed.
+- Improve geo queries by using GeoJSON and 2dsphere indexes for radius-based searches.
+- Add caching for safety status computations to speed up repeated queries.
+- Add stronger security features such as rate limiting, audit logs, and refresh tokens.
+- Add push notifications and mobile-friendly features for field operations.
+- Implement advanced analytics (heatmaps, prediction, seasonal patterns) and better visualization for staff dashboards.
+
+
+CONCLUSION
+CitizenCare is a complete full-stack web application demonstrating how digital reporting, real-time communication, and AI integration can improve public safety systems. The project provides a structured reporting process for citizens, a verification and monitoring workflow for police/admin users, and an optional CCTV AI pipeline that can detect weapon-like objects and trigger immediate staff alerts. The use of React for UI, Express for APIs, MongoDB for storage, and Socket.io for real-time updates makes the system modern and scalable for further expansion. Although the current implementation has limitations (particularly in AI model scope and production readiness), the modular architecture provides a strong foundation for future improvements and real-world adaptation.
+

@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+frontend/node_modules/
+backend/node_modules/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Python
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Model training files
+runs/
+wandb/
+datasets/
+*.pt
+*.pth
+*.onnx
+*.engine
+
+# Uploads and temporary files
+uploads/
+temp/
+tmp/
+*.log
+
+# Build files
+dist/
+build/
+.next/
+coverage/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini

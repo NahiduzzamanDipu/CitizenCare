@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --surface: 255 255 255;
+  --surface-muted: 248 250 252;
+  --text: 15 23 42;
+  --text-muted: 100 116 139;
+}
+
+.dark {
+  --surface: 15 23 42;
+  --surface-muted: 30 41 59;
+  --text: 241 245 249;
+  --text-muted: 148 163 184;
+}
+
+body {
+  @apply bg-surface-muted text-slate-900 antialiased transition-colors duration-200;
+  @apply dark:bg-slate-900 dark:text-slate-100;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}

@@ -1,0 +1,24 @@
+# Normalise line endings: LF in the repository, native in the working copy.
+* text=auto eol=lf
+
+# Windows-only scripts keep CRLF.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Binary assets — never diff or convert these.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.pdf binary
+*.pt binary
+*.mp4 binary
+*.webm binary
+
+# Keep generated lockfiles out of PR diffs.
+package-lock.json linguist-generated=true -diff
+
+# Report the repository as JavaScript, not as its documentation.
+docs/** linguist-documentation=true
